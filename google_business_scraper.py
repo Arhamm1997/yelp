@@ -718,10 +718,14 @@ def main():
     except ValueError:
         max_results = 20
 
-    # Generate filename
+    # Generate filename with absolute path
     safe_category = re.sub(r'[^\w\s-]', '', category).strip().replace(' ', '_')
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     output_file = f"google_{safe_category}_{timestamp}.csv"
+
+    # Get absolute path
+    import os
+    output_file = os.path.abspath(output_file)
 
     print(f"\n{'='*70}")
     print(f"CONFIGURATION")
@@ -731,7 +735,7 @@ def main():
     for i, loc in enumerate(locations, 1):
         print(f"   {i}. {loc}")
     print(f"📊 Max per location: {max_results}")
-    print(f"💾 Output: {output_file}")
+    print(f"💾 Output file: {output_file}")
     print(f"{'='*70}")
 
     confirm = input("\nStart scraping? (yes/no): ").strip().lower()
@@ -752,6 +756,17 @@ def main():
             print("\n❌ No businesses found.")
             return
 
+        # Show preview of data
+        print(f"\n{'='*70}")
+        print("DATA PREVIEW (First Business)")
+        print(f"{'='*70}")
+        if all_businesses:
+            sample = all_businesses[0]
+            for key, value in sample.items():
+                preview_value = str(value)[:60] + "..." if len(str(value)) > 60 else str(value)
+                print(f"{key:20} : {preview_value}")
+        print(f"{'='*70}")
+
         # Save to CSV
         print(f"\n{'='*70}")
         print("SAVING RESULTS")
@@ -763,18 +778,76 @@ def main():
             'business_hours', 'google_maps_url'
         ]
 
-        with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(all_businesses)
+        try:
+            # Clean data before writing
+            for business in all_businesses:
+                for key in fieldnames:
+                    if key not in business:
+                        business[key] = 'N/A'
+                    # Clean special characters that might break CSV
+                    if isinstance(business[key], str):
+                        business[key] = business[key].replace('\n', ' ').replace('\r', ' ')
+
+            with open(output_file, 'w', newline='', encoding='utf-8-sig') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
+                writer.writeheader()
+
+                # Write each row individually with error handling
+                for idx, business in enumerate(all_businesses, 1):
+                    try:
+                        writer.writerow(business)
+                    except Exception as row_error:
+                        print(f"⚠️ Warning: Error writing row {idx}: {str(row_error)}")
+                        # Write with all fields as strings
+                        safe_business = {k: str(v) for k, v in business.items()}
+                        writer.writerow(safe_business)
+
+            print(f"✅ CSV file saved successfully: {output_file}")
+
+        except Exception as csv_error:
+            print(f"❌ Error saving CSV: {str(csv_error)}")
+            # Fallback: Try simple CSV writing
+            try:
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    # Write header
+                    f.write(','.join(fieldnames) + '\n')
+                    # Write data
+                    for business in all_businesses:
+                        row = []
+                        for field in fieldnames:
+                            value = str(business.get(field, 'N/A')).replace(',', ';').replace('\n', ' ')
+                            row.append(f'"{value}"')
+                        f.write(','.join(row) + '\n')
+                print(f"✅ CSV file saved using fallback method: {output_file}")
+            except Exception as fallback_error:
+                print(f"❌ Fallback also failed: {str(fallback_error)}")
 
         print(f"\n{'='*70}")
         print(f"✅ SCRAPING COMPLETE!")
         print(f"{'='*70}")
         print(f"📊 Total businesses: {len(all_businesses)}")
-        print(f"💾 Saved to: {output_file}")
-        print(f"📧 Email addresses found: {sum(1 for b in all_businesses if b['email'] != 'N/A')}")
-        print(f"📅 Years in business found: {sum(1 for b in all_businesses if b['years_in_business'] != 'N/A')}")
+        print(f"💾 File location: {output_file}")
+
+        # Verify file exists and show size
+        import os
+        if os.path.exists(output_file):
+            file_size = os.path.getsize(output_file)
+            print(f"✅ File created successfully ({file_size:,} bytes)")
+
+            # Count rows in CSV to verify
+            try:
+                with open(output_file, 'r', encoding='utf-8-sig') as f:
+                    row_count = sum(1 for _ in f) - 1  # -1 for header
+                print(f"✅ CSV contains {row_count} data rows")
+            except:
+                pass
+        else:
+            print(f"⚠️ Warning: Output file not found at {output_file}")
+
+        print(f"📧 Email addresses found: {sum(1 for b in all_businesses if b.get('email', 'N/A') != 'N/A')}")
+        print(f"📅 Years in business found: {sum(1 for b in all_businesses if b.get('years_in_business', 'N/A') != 'N/A')}")
+        print(f"{'='*70}")
+        print(f"\n💡 TIP: Open the CSV file in Excel or Google Sheets to view the data")
         print(f"{'='*70}")
 
     except Exception as e:
