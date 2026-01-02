@@ -10,10 +10,14 @@ This repository contains two powerful web scrapers for extracting business infor
 Both scrapers include:
 - 🤖 **Advanced Anti-Detection** - Stealth mode with randomized user agents and human-like behavior
 - 🌍 **Multi-Location Support** - Scrape businesses across different states and cities
-- 📊 **Comprehensive Data Extraction** - Business name, ratings, reviews, address, phone, website, hours
+- 📊 **Comprehensive Data Extraction** - Business name, ratings, reviews, address, phone, email, website, years in business, hours
 - 💾 **CSV Export** - Save all data to structured CSV files
 - ⏱️ **Smart Delays** - Random timing to avoid detection
 - 🔒 **Session Management** - Handles verification and captchas
+
+**NEW in v2.0:**
+- 📧 **Email Extraction** - Automatically finds business email addresses from GMB profiles and websites
+- 📅 **Years of Experience** - Detects and extracts years in business or establishment date
 
 ## Installation
 
@@ -58,9 +62,11 @@ Max results per location: 20
 
 **Features:**
 - Search across unlimited cities/states
-- Specify max results per location (up to 50)
+- Specify max results per location (up to 100)
 - Automatically generates timestamped CSV files
-- Extracts: name, rating, reviews, address, phone, website, category, hours, Google Maps URL
+- Extracts: name, rating, reviews, address, phone, **email**, website, category, **years in business**, hours, Google Maps URL
+- **NEW:** Email extraction from GMB profiles and business websites
+- **NEW:** Years of experience/establishment date detection
 
 **Output File Example:**
 ```
@@ -101,8 +107,10 @@ Both scrapers extract the following information for each business:
 | `review_count` | Number of reviews |
 | `address` | Full business address |
 | `phone` | Contact phone number |
+| `email` | Business email address (Google scraper only) |
 | `website` | Business website URL |
 | `categories` | Business category/type |
+| `years_in_business` | Years in business or establishment date (Google scraper only) |
 | `business_hours` | Operating hours |
 | `yelp_url` / `google_maps_url` | Link to the business listing |
 
