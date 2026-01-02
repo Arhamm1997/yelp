@@ -1,0 +1,24 @@
+# Zip files
+*.zip
+
+# Quick start guide (included in zip)
+QUICK_START.txt
+
+# CSV output files
+*.csv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
